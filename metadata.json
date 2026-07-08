@@ -1,0 +1,6 @@
+{
+  "name": "Tecnoversa SOC",
+  "description": "Centro de Operaciones de Seguridad Tecnoversa - Detección, análisis y respuesta a incidentes en tiempo real.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
