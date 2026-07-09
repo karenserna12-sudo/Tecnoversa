@@ -12,11 +12,34 @@ import Services from "./components/Services";
 import Team from "./components/Team";
 import GalleryCarousel from "./components/GalleryCarousel";
 import RequestForm from "./components/RequestForm";
+import LoginModal from "./components/LoginModal";
+import Solicitudes from "./components/Solicitudes";
 
 export default function App() {
   const [activeTab, setActiveTab] = useState("inicio");
   const [preselectedService, setPreselectedService] = useState("");
   const [prefilledMessage, setPrefilledMessage] = useState("");
+
+  // Admin session states
+  const [token, setToken] = useState(() => localStorage.getItem("tecnoversa_admin_token") || "");
+  const [isAdmin, setIsAdmin] = useState(() => localStorage.getItem("tecnoversa_admin_token") === "tecnoversa-admin-token-2026");
+  const [loginModalOpen, setLoginModalOpen] = useState(false);
+
+  const handleLoginSuccess = (newToken: string) => {
+    setToken(newToken);
+    setIsAdmin(true);
+    localStorage.setItem("tecnoversa_admin_token", newToken);
+  };
+
+  const handleLogout = () => {
+    setToken("");
+    setIsAdmin(false);
+    localStorage.removeItem("tecnoversa_admin_token");
+    if (activeTab === "solicitudes") {
+      setActiveTab("inicio");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
 
   const handleSelectService = (serviceName: string, actionType: "cotizar" | "solicitar") => {
     setPreselectedService(serviceName);
@@ -51,7 +74,13 @@ export default function App() {
 
       <div>
         {/* Navigation Glass Header */}
-        <Header activeTab={activeTab} setActiveTab={setActiveTab} />
+        <Header 
+          activeTab={activeTab} 
+          setActiveTab={setActiveTab} 
+          isAdmin={isAdmin}
+          onOpenLogin={() => setLoginModalOpen(true)}
+          onLogout={handleLogout}
+        />
 
         {/* Tab Content Display Stage */}
         <main className="relative">
@@ -119,6 +148,18 @@ export default function App() {
                 />
               </motion.div>
             )}
+
+            {activeTab === "solicitudes" && isAdmin && (
+              <motion.div
+                key="solicitudes"
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -15 }}
+                transition={{ duration: 0.3 }}
+              >
+                <Solicitudes token={token} />
+              </motion.div>
+            )}
           </AnimatePresence>
         </main>
       </div>
@@ -169,6 +210,11 @@ export default function App() {
             <button onClick={() => setActiveTab("equipo")} className="hover:text-brand-accent cursor-pointer">Equipo</button>
             <button onClick={() => setActiveTab("galeria")} className="hover:text-brand-accent cursor-pointer">Galería</button>
             <button onClick={() => setActiveTab("solicitar")} className="hover:text-brand-accent cursor-pointer">Contacto</button>
+            {isAdmin && (
+              <button onClick={() => setActiveTab("solicitudes")} className="hover:text-brand-accent cursor-pointer text-brand-accent font-semibold">
+                Solicitudes
+              </button>
+            )}
           </div>
 
           {/* Col 3: Copyright info */}
@@ -179,6 +225,13 @@ export default function App() {
           
         </div>
       </footer>
+
+      {/* Login Modal */}
+      <LoginModal 
+        isOpen={loginModalOpen} 
+        onClose={() => setLoginModalOpen(false)} 
+        onLoginSuccess={handleLoginSuccess} 
+      />
     </div>
   );
 }

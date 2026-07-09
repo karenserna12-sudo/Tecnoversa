@@ -9,9 +9,18 @@ import { Shield, Menu, X, MessageSquare, PhoneCall } from "lucide-react";
 interface HeaderProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
+  isAdmin: boolean;
+  onOpenLogin: () => void;
+  onLogout: () => void;
 }
 
-export default function Header({ activeTab, setActiveTab }: HeaderProps) {
+export default function Header({ 
+  activeTab, 
+  setActiveTab,
+  isAdmin,
+  onOpenLogin,
+  onLogout
+}: HeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navItems = [
@@ -20,6 +29,7 @@ export default function Header({ activeTab, setActiveTab }: HeaderProps) {
     { id: "equipo", label: "Equipo de trabajo" },
     { id: "galeria", label: "Galería" },
     { id: "solicitar", label: "Solicitar servicio" },
+    ...(isAdmin ? [{ id: "solicitudes", label: "Solicitudes" }] : []),
   ];
 
   const handleTabClick = (tabId: string) => {
@@ -73,8 +83,25 @@ export default function Header({ activeTab, setActiveTab }: HeaderProps) {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-accent opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-brand-accent shadow-[0_0_8px_var(--color-brand-accent)]"></span>
             </span>
-            SOC OPERACIONAL - TIEMPO REAL
+            SOC OPERACIONAL
           </div>
+
+          {isAdmin ? (
+            <button
+              onClick={onLogout}
+              className="flex items-center gap-1 px-3 py-1.5 bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-brand-bg text-xs font-bold rounded-lg border border-red-500/20 transition-all duration-200 cursor-pointer"
+            >
+              Cerrar Sesión
+            </button>
+          ) : (
+            <button
+              onClick={onOpenLogin}
+              className="flex items-center gap-1 px-3 py-1.5 bg-brand-accent/10 text-brand-accent hover:bg-brand-accent hover:text-brand-bg text-xs font-bold rounded-lg border border-brand-accent/20 transition-all duration-200 cursor-pointer"
+            >
+              Login Admin
+            </button>
+          )}
+
           <a
             href="https://wa.me/573003509169?text=Hola%2C%20quiero%20solicitar%20informaci%C3%B3n%20sobre%20los%20servicios%20de%20Tecnoversa%20SOC"
             target="_blank"
@@ -115,14 +142,36 @@ export default function Header({ activeTab, setActiveTab }: HeaderProps) {
               </button>
             );
           })}
-          <div className="pt-2 border-t border-brand-border mt-2">
+          <div className="pt-2 border-t border-brand-border mt-2 flex flex-col gap-2">
+            {isAdmin ? (
+              <button
+                onClick={() => {
+                  onLogout();
+                  setMobileMenuOpen(false);
+                }}
+                className="w-full py-3 bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-brand-bg font-bold rounded-lg border border-red-500/20 transition-colors cursor-pointer text-sm"
+              >
+                Cerrar Sesión Admin
+              </button>
+            ) : (
+              <button
+                onClick={() => {
+                  onOpenLogin();
+                  setMobileMenuOpen(false);
+                }}
+                className="w-full py-3 bg-brand-accent/10 text-brand-accent hover:bg-brand-accent hover:text-brand-bg font-bold rounded-lg border border-brand-accent/20 transition-colors cursor-pointer text-sm"
+              >
+                Login Admin
+              </button>
+            )}
+
             <a
               href="https://wa.me/573003509169?text=Hola%2C%20quiero%20solicitar%20informaci%C3%B3n%20sobre%20los%20servicios%20de%20Tecnoversa%20SOC"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center justify-center gap-2 w-full py-3 bg-emerald-500 text-brand-bg hover:bg-emerald-400 font-bold rounded-lg transition-colors"
+              className="flex items-center justify-center gap-2 w-full py-3 bg-[#25D366] text-brand-bg hover:bg-emerald-400 font-bold rounded-lg transition-colors text-sm"
             >
-              <MessageSquare className="w-4 h-4" />
+              <MessageSquare className="w-4 h-4 text-brand-bg" />
               Escribir por WhatsApp
             </a>
           </div>

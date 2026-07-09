@@ -69,6 +69,25 @@ async function connectToMongo() {
 connectToMongo();
 
 // API Endpoints
+app.post("/api/login", (req, res) => {
+  const { username, password } = req.body;
+
+  if (username === "tecnoversa" && password === "S0c2024Fr4nch0") {
+    console.log("🔓 Successful admin login from IP:", req.ip);
+    return res.json({ 
+      success: true, 
+      message: "Autenticación exitosa", 
+      token: "tecnoversa-admin-token-2026" 
+    });
+  }
+
+  console.warn("🔒 Failed admin login attempt for user:", username);
+  return res.status(401).json({ 
+    success: false, 
+    message: "Usuario o contraseña incorrectos." 
+  });
+});
+
 app.post("/api/solicitudes", async (req, res) => {
   const { fullName, email, phone, service, message } = req.body;
 
@@ -135,6 +154,15 @@ app.post("/api/solicitudes", async (req, res) => {
 
 // GET endpoint to fetch submitted requests (for review)
 app.get("/api/solicitudes", async (req, res) => {
+  const token = req.headers["x-admin-token"] || req.query.token;
+
+  if (token !== "tecnoversa-admin-token-2026") {
+    return res.status(403).json({ 
+      success: false, 
+      message: "Acceso no autorizado. Se requiere token de administrador." 
+    });
+  }
+
   const isConnected = await connectToMongo();
 
   if (isConnected) {
@@ -167,25 +195,30 @@ app.get("/api/health", (req, res) => {
   });
 });
 
-async function startServer() {
-  // Vite integration middleware
-  if (process.env.NODE_ENV !== "production") {
+if (process.env.NODE_ENV !== "production" && !process.env.VERCEL) {
+  async function startDevServer() {
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",
     });
     app.use(vite.middlewares);
-  } else {
-    const distPath = path.join(process.cwd(), "dist");
-    app.use(express.static(distPath));
-    app.get("*", (req, res) => {
-      res.sendFile(path.join(distPath, "index.html"));
+    app.listen(PORT, "0.0.0.0", () => {
+      console.log(`🚀 Tecnoversa SOC Server running in local dev mode on http://localhost:${PORT}`);
     });
   }
-
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`🚀 Tecnoversa SOC Server running on http://0.0.0.0:${PORT}`);
+  startDevServer();
+} else {
+  const distPath = path.join(process.cwd(), "dist");
+  app.use(express.static(distPath));
+  app.get("*", (req, res) => {
+    res.sendFile(path.join(distPath, "index.html"));
   });
+
+  if (!process.env.VERCEL) {
+    app.listen(PORT, "0.0.0.0", () => {
+      console.log(`🚀 Tecnoversa SOC Server running on port ${PORT}`);
+    });
+  }
 }
 
-startServer();
+export default app;

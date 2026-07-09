@@ -99,9 +99,4 @@ export const GALLERY: GalleryImage[] = [
     alt: "Analista revisando Grafana",
     caption: "Auditoría de rendimiento y tráfico inusual mediante tableros avanzados de Grafana",
   },
-  {
-    url: "/img/accion3.jpg",
-    alt: "Analista revisando panel de seguridad",
-    caption: "Supervisión proactiva y correlación de logs críticos de seguridad",
-  },
 ];
