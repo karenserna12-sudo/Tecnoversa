@@ -19,7 +19,9 @@ const PORT = 3000;
 app.use(express.json());
 
 // Temporary in-memory / JSON fallback store for requests if MongoDB is not connected
-const DATA_DIR = path.join(process.cwd(), "data");
+const DATA_DIR = process.env.VERCEL 
+  ? "/tmp" 
+  : path.join(process.cwd(), "data");
 const FALLBACK_FILE = path.join(DATA_DIR, "solicitudes_fallback.json");
 
 // Ensure fallback directory exists
