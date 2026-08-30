@@ -8,7 +8,6 @@ import path from "path";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
 import fs from "fs";
-import { createServer as createViteServer } from "vite";
 
 // Load environment variables
 dotenv.config();
@@ -199,6 +198,9 @@ app.get("/api/health", (req, res) => {
 
 if (process.env.NODE_ENV !== "production" && !process.env.VERCEL) {
   async function startDevServer() {
+    // Import dinámico: Vite (y Rollup) solo se cargan aquí, en desarrollo local.
+    // Nunca se ejecuta ni se resuelve este import en producción/Vercel.
+    const { createServer: createViteServer } = await import("vite");
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",
@@ -224,3 +226,18 @@ if (process.env.NODE_ENV !== "production" && !process.env.VERCEL) {
 }
 
 export default app;
+ 
+    
+
+   
+
+
+
+
+
+
+
+
+
+ 
+
