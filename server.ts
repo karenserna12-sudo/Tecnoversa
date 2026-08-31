@@ -8,9 +8,43 @@ import path from "path";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
 import fs from "fs";
+import nodemailer from "nodemailer";
 
 // Load environment variables
 dotenv.config();
+
+async function sendNotificationEmail(solicitud: {
+  fullName: string;
+  email: string;
+  phone: string;
+  service: string;
+  message: string;
+}) {
+  try {
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.GMAIL_USER,
+        pass: process.env.GMAIL_APP_PASSWORD,
+      },
+    });
+
+    await transporter.sendMail({
+      from: process.env.GMAIL_USER,
+      to: process.env.NOTIFY_EMAIL,
+      subject: `Nueva solicitud - ${solicitud.service}`,
+      text: `Nombre: ${solicitud.fullName}
+Correo: ${solicitud.email}
+Teléfono: ${solicitud.phone}
+Servicio: ${solicitud.service}
+Mensaje: ${solicitud.message}`,
+    });
+
+    console.log("📧 Correo de notificación enviado");
+  } catch (emailError) {
+    console.error("Error enviando correo de notificación:", emailError);
+  }
+}
 
 const app = express();
 const PORT = 3000;
@@ -105,6 +139,7 @@ app.post("/api/solicitudes", async (req, res) => {
     try {
       const newRequest = new ServiceRequestModel({ fullName, email, phone, service, message });
       const savedRequest = await newRequest.save();
+      await sendNotificationEmail({ fullName, email, phone, service, message });
       return res.status(201).json({
         success: true,
         message: "¡Solicitud guardada con éxito en MongoDB Atlas!",
@@ -138,6 +173,7 @@ app.post("/api/solicitudes", async (req, res) => {
     fs.writeFileSync(FALLBACK_FILE, JSON.stringify(requestsList, null, 2), "utf-8");
 
     console.log("💾 Request saved locally in fallback JSON file:", localRequest.id);
+    await sendNotificationEmail({ fullName, email, phone, service, message });
     return res.status(201).json({
       success: true,
       message: "¡Solicitud guardada con éxito (Persistencia de Respaldo Local)! Configura MONGODB_URI en producción.",
@@ -226,7 +262,6 @@ if (process.env.NODE_ENV !== "production" && !process.env.VERCEL) {
 }
 
 export default app;
- 
     
 
    
