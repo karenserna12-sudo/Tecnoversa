@@ -20,30 +20,26 @@ async function sendNotificationEmail(solicitud: {
   service: string;
   message: string;
 }) {
-  try {
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.GMAIL_USER,
-        pass: process.env.GMAIL_APP_PASSWORD,
-      },
-    });
+  const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: process.env.GMAIL_USER,
+      pass: process.env.GMAIL_APP_PASSWORD,
+    },
+  });
 
-    await transporter.sendMail({
-      from: process.env.GMAIL_USER,
-      to: process.env.NOTIFY_EMAIL,
-      subject: `Nueva solicitud - ${solicitud.service}`,
-      text: `Nombre: ${solicitud.fullName}
+  await transporter.sendMail({
+    from: process.env.GMAIL_USER,
+    to: process.env.NOTIFY_EMAIL,
+    subject: `Nueva solicitud - ${solicitud.service}`,
+    text: `Nombre: ${solicitud.fullName}
 Correo: ${solicitud.email}
 Teléfono: ${solicitud.phone}
 Servicio: ${solicitud.service}
 Mensaje: ${solicitud.message}`,
-    });
+  });
 
-    console.log("📧 Correo de notificación enviado");
-  } catch (emailError) {
-    console.error("Error enviando correo de notificación:", emailError);
-  }
+  console.log("📧 Correo de notificación enviado");
 }
 
 const app = express();
@@ -139,12 +135,25 @@ app.post("/api/solicitudes", async (req, res) => {
     try {
       const newRequest = new ServiceRequestModel({ fullName, email, phone, service, message });
       const savedRequest = await newRequest.save();
-      await sendNotificationEmail({ fullName, email, phone, service, message });
+
+      let emailStatus = "not_attempted";
+      let emailError = null;
+      try {
+        await sendNotificationEmail({ fullName, email, phone, service, message });
+        emailStatus = "sent";
+      } catch (e: any) {
+        emailStatus = "failed";
+        emailError = e?.message || String(e);
+        console.error("Error enviando correo de notificación:", e);
+      }
+
       return res.status(201).json({
         success: true,
         message: "¡Solicitud guardada con éxito en MongoDB Atlas!",
         data: savedRequest,
-        db: "mongodb"
+        db: "mongodb",
+        emailStatus,
+        emailError
       });
     } catch (dbError) {
       console.error("Error saving to MongoDB, falling back...", dbError);
@@ -173,12 +182,25 @@ app.post("/api/solicitudes", async (req, res) => {
     fs.writeFileSync(FALLBACK_FILE, JSON.stringify(requestsList, null, 2), "utf-8");
 
     console.log("💾 Request saved locally in fallback JSON file:", localRequest.id);
-    await sendNotificationEmail({ fullName, email, phone, service, message });
+
+    let emailStatus = "not_attempted";
+    let emailError = null;
+    try {
+      await sendNotificationEmail({ fullName, email, phone, service, message });
+      emailStatus = "sent";
+    } catch (e: any) {
+      emailStatus = "failed";
+      emailError = e?.message || String(e);
+      console.error("Error enviando correo de notificación:", e);
+    }
+
     return res.status(201).json({
       success: true,
       message: "¡Solicitud guardada con éxito (Persistencia de Respaldo Local)! Configura MONGODB_URI en producción.",
       data: localRequest,
-      db: "local_json"
+      db: "local_json",
+      emailStatus,
+      emailError
     });
   } catch (err) {
     console.error("Critical: Failed to save fallback data", err);
@@ -262,10 +284,6 @@ if (process.env.NODE_ENV !== "production" && !process.env.VERCEL) {
 }
 
 export default app;
-    
-
-   
-
 
 
 
